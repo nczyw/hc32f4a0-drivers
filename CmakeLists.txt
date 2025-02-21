@@ -1,0 +1,60 @@
+cmake_minimum_required(VERSION 3.20)
+#set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_DIR}/toolchain/toolchain.cmake" CACHE FILEPATH "Toolchain file")
+project(hc32f4a0 LANGUAGES C ASM)
+# 源文件
+file(GLOB DRIVERS_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/GCC/startup_hc32f4a0.S"
+    "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/system_hc32f4a0.c"
+    "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/*.c"
+)
+list(REMOVE_ITEM DRIVERS_SOURCES "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/hc32_ll_usb.c")
+
+#添加.ld链接脚本路径
+# -T$(LDSCRIPT)依赖的可执行文件链接脚本
+if(BOOTLOADER AND APP)
+    message(FATAL_ERROR "Cannot define both BOOTLOADER and APP. Choose only one.")
+endif()
+# 设置定义的宏
+set(COMPILE_DEFS 
+    -D__DEBUG
+    -DHC32F4A0
+    -DUSE_DDL_DRIVER
+)
+if(BOOTLOADER)
+    list(APPEND COMPILE_DEFS -DBOOTLOADER)
+    message(STATUS "Create bootloader project.")
+elseif(APP)
+    list(APPEND COMPILE_DEFS -DAPP)
+    message(STATUS "Create app project.")
+else()
+    message(STATUS "Create nomal project.")
+endif()
+set(LINKER_SCRIPT "")
+if(MCU_TYPE STREQUAL "HC32F4A0xG")
+    if(BOOTLOADER)
+        set(LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/linker/bootloader/HC32F4A0xG.ld" PARENT_SCOPE)
+    elseif(APP)
+        set(LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/linker/app/HC32F4A0xG.ld" PARENT_SCOPE)
+    else()
+        set(LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/GCC/linker/HC32F4A0xG.ld" PARENT_SCOPE)
+    endif()
+elseif(MCU_TYPE STREQUAL "HC32F4A0xI")
+    if(BOOTLOADER)
+        set(LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/linker/bootloader/HC32F4A0xI.ld" PARENT_SCOPE)
+    elseif(APP)
+        set(LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/linker/app/HC32F4A0xI.ld" PARENT_SCOPE)
+    else()
+        set(LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/GCC/linker/HC32F4A0xI.ld" PARENT_SCOPE)
+    endif()
+endif()
+add_library(${PROJECT_NAME} STATIC ${DRIVERS_SOURCES})
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC 
+    ${COMPILE_DEFS}
+)
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    "${CMAKE_CURRENT_LIST_DIR}/mcu/inc"
+    "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/inc"
+    "${CMAKE_CURRENT_LIST_DIR}/cmsis/Include"
+    "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Include"                
+)

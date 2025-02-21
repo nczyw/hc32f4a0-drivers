@@ -1,0 +1,26 @@
+;               Optional SYSTICK
+[Sfr]
+;     SCB
+
+sfr = "ICSR.PENDSTSET"    , "Memory", 0xE000ED04,        4, base=16,    bitRange=26-26
+sfr = "ICSR.PENDSTCLR"    , "Memory", 0xE000ED04,        4, base=16,    bitRange=25-25
+
+sfr = "SHPR3.PRI_15"      , "Memory", 0xE000ED20,        4, base=16,    bitRange=30-31
+
+;     SYSTICK
+;
+;     Name                        Zone      Address     Bytesize  Displaybase Bitrange
+;     ----                        ----      -------     --------  ----------- --------
+sfr = "SYST_CSR"          , "Memory", 0xE000E010,        4, base=16, tooltip="SysTick Control and Status Register"
+sfr = "SYST_CSR.ENABLE"   , "Memory", 0xE000E010,        4, base=16,    bitRange=0-0
+sfr = "SYST_CSR.TICKINT"  , "Memory", 0xE000E010,        4, base=16,    bitRange=1-1
+sfr = "SYST_CSR.CLKSOURCE", "Memory", 0xE000E010,        4, base=16,    bitRange=2-2
+sfr = "SYST_CSR.COUNTFLAG", "Memory", 0xE000E010,        4, base=16,    bitRange=16-16
+sfr = "SYST_RVR"          , "Memory", 0xE000E014,        4, base=16, tooltip="SysTick Reload Value Register"
+sfr = "SYST_RVR.RELOAD"   , "Memory", 0xE000E014,        4, base=10,    bitRange=0-23
+sfr = "SYST_CVR"          , "Memory", 0xE000E018,        4, base=16, tooltip="SysTick Current Value Register"
+sfr = "SYST_CVR.CURRENT"  , "Memory", 0xE000E018,        4, base=10,    bitRange=0-23
+sfr = "SYST_CALIB"        , "Memory", 0xE000E01C,        4, base=16, readOnly, tooltip="SysTick Calibration Value Register"
+sfr = "SYST_CALIB.TENMS"  , "Memory", 0xE000E01C,        4, base=10,    bitRange=0-23
+sfr = "SYST_CALIB.SKEW"   , "Memory", 0xE000E01C,        4, base=16,    bitRange=30-30
+sfr = "SYST_CALIB.NOREF"  , "Memory", 0xE000E01C,        4, base=16,    bitRange=31-31
