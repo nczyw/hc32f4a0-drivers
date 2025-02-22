@@ -17,6 +17,6 @@ set(CMAKE_NM ${TOOLCHAIN_PREFIX}-nm)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # 添加 -specs=nosys.specs 以避免 _close 未实现的警告
-if(NOT "${CMAKE_EXE_LINKER_FLAGS}" MATCHES "-specs=nosys.specs")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nosys.specs")
-endif()
+#if(NOT "${CMAKE_EXE_LINKER_FLAGS}" MATCHES "-specs=nosys.specs")
+#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -specs=nosys.specs")
+#endif()
