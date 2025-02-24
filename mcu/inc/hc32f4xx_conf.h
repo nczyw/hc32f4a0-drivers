@@ -49,7 +49,7 @@ extern "C"
  */
 #define LL_ICG_ENABLE                               (DDL_ON)
 #define LL_UTILITY_ENABLE                           (DDL_ON)
-#define LL_PRINT_ENABLE                             (DDL_OFF)
+#define LL_PRINT_ENABLE                             (DDL_ON)
 
 #define LL_ADC_ENABLE                               (DDL_ON)
 #define LL_AES_ENABLE                               (DDL_ON)
