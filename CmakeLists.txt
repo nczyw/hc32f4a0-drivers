@@ -6,6 +6,7 @@ file(GLOB DRIVERS_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/GCC/startup_hc32f4a0.S"
     "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/system_hc32f4a0.c"
     "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/*.c"
+    "${CMAKE_CURRENT_LIST_DIR}/mcu/src/*.c"
 )
 list(REMOVE_ITEM DRIVERS_SOURCES "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/hc32_ll_usb.c")
 
