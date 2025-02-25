@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 #set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_LIST_DIR}/toolchain/toolchain.cmake" CACHE FILEPATH "Toolchain file")
-project(hc32f4a0 LANGUAGES C ASM)
+project(hc32f4a0 LANGUAGES C ASM VERSION 2.3.0)
 # 源文件
 file(GLOB DRIVERS_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/GCC/startup_hc32f4a0.S"
