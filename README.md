@@ -1,7 +1,7 @@
 # 小华单片机hc32f4a0系统cmake驱动
 ## 介绍
     - 支持配置为bootloader,app,normal三种模式
-    - bootloader模式下，flash前64KB为bootloader，其余为app
+    - bootloader模式下，flash前128KB为bootloader，其余为app
 ## 使用前准备,[MinGW](https://github.com/niXman/mingw-builds-binaries/releases),[gcc-arm-none-eabi](https://developer.arm.com/downloads/-/gnu-rm)
     - 安装MinGW编译器
     - 安装gcc-arm-none-eabi,交叉编译工具
