@@ -33,7 +33,7 @@ __OTP_LOCK_B17_OFFSET = __OTP_LOCK_B17_START - __OTP_LOCK_BASE;
 /* Use contiguous memory regions for simple. */
 MEMORY
 {
-    FLASH       (rx): ORIGIN = 0x00010000, LENGTH = 960K
+    FLASH       (rx): ORIGIN = 0x00020000, LENGTH = 896K
     OTP_DATA    (rx): ORIGIN = 0x03000000, LENGTH = 6K
     OTP_LOCK    (rx): ORIGIN = 0x03001800, LENGTH = 728
     RAM        (rwx): ORIGIN = 0x1FFE0000, LENGTH = 512K
