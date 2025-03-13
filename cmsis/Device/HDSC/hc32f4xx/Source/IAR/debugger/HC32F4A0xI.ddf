@@ -1,0 +1,37 @@
+;; Architecture extensions
+#include weak "..\..\..\..\..\ARM\ARMv7-M-ETM.ddf"
+#include weak "..\..\..\..\..\ARM\ARMv7-M-TPIU.ddf"
+#include weak "..\..\..\..\..\ARM\ARMv7-M-MPU.ddf"
+
+;; Memory information ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Used to define address zones within the ARM address space (Memory).
+;;
+;;   Name      may be almost anything
+;;   AdrSpace  must be Memory
+;;   StartAdr  start of memory block
+;;   EndAdr    end of memory block
+;;   AccType   type of access, read-only (R), read-write (RW) or SFR (W)
+
+[Memory]
+;;       Name                  AdrSpace    StartAdr    EndAdr      AccType   Width
+Memory =  SystemSFR        Memory      0xE0000000  0xE00FFFFF  W
+Memory =  ExtDev           Memory      0x60000000  0x9FFFFFFF  W
+Memory =  Periph-BitBand   Memory      0x42000000  0x43FFFFFF  W
+Memory =  Periph           Memory      0x40008000  0x400FFFFF  W
+Memory =  SRAM_BitBand     Memory      0x22000000  0x23FFFFFF  RW
+Memory =  SRAMB            Memory      0x200F0000  0x200F0FFF  RW
+Memory =  SRAM4            Memory      0x20058000  0x2005FFFF  RW
+Memory =  SRAM3            Memory      0x20040000  0x20057FFF  RW
+Memory =  SRAM2            Memory      0x20020000  0x2003FFFF  RW
+Memory =  SRAM1            Memory      0x20000000  0x2001FFFF  RW
+Memory =  SRAMH            Memory      0x1FFE0000  0x1FFFFFFF  RW
+Memory =  OTP              Memory      0x03000000  0x03001ADB  R
+Memory =  RemapMem         Memory      0x02000000  0x020FFFFF  R
+Memory =  Flash            Memory      0x00000000  0x001FFFFF  R
+
+TrustedRanges = true
+UseSfrFilter = true
+
+[SfrInclude]
+File = HC32F4A0.svd

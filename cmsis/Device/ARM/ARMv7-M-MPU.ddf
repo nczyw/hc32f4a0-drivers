@@ -1,0 +1,80 @@
+;               MPU
+[Sfr]
+
+;
+;     Name                        Zone      Address     Bytesize  Displaybase Bitrange
+;     ----                        ----      -------     --------  ----------- --------
+
+;MPU_TYPE is a common register
+
+sfr = "MPU_CTRL"           , "Memory", 0xE000ED94,        4, base=16
+sfr = "MPU_CTRL.ENABLE"    , "Memory", 0xE000ED94,        4, base=16,    bitRange=0-0
+sfr = "MPU_CTRL.HFNMIENA"  , "Memory", 0xE000ED94,        4, base=16,    bitRange=1-1
+sfr = "MPU_CTRL.PRIVDEFENA", "Memory", 0xE000ED94,        4, base=16,    bitRange=2-2
+
+sfr = "MPU_RNR"            , "Memory", 0xE000ED98,        4, base=16
+sfr = "MPU_RNR.REGION"     , "Memory", 0xE000ED98,        4, base=16,    bitRange=0-7
+
+sfr = "MPU_RBAR"           , "Memory", 0xE000ED9C,        4, base=16
+sfr = "MPU_RBAR.REGION"    , "Memory", 0xE000ED9C,        4, base=16,    bitRange=0-3
+sfr = "MPU_RBAR.VALID"     , "Memory", 0xE000ED9C,        4, base=16,    bitRange=4-4
+sfr = "MPU_RBAR.ADDR"      , "Memory", 0xE000ED9C,        4, base=16,    bitRange=5-31
+
+sfr = "MPU_RASR"           , "Memory", 0xE000EDA0,        4, base=16
+sfr = "MPU_RASR.ENABLE"    , "Memory", 0xE000EDA0,        4, base=16,    bitRange=0-0
+sfr = "MPU_RASR.SIZE"      , "Memory", 0xE000EDA0,        4, base=16,    bitRange=1-5
+sfr = "MPU_RASR.SRD"       , "Memory", 0xE000EDA0,        4, base=16,    bitRange=8-15
+sfr = "MPU_RASR.B"         , "Memory", 0xE000EDA0,        4, base=16,    bitRange=16-16
+sfr = "MPU_RASR.C"         , "Memory", 0xE000EDA0,        4, base=16,    bitRange=17-17
+sfr = "MPU_RASR.S"         , "Memory", 0xE000EDA0,        4, base=16,    bitRange=18-18
+sfr = "MPU_RASR.TEX"       , "Memory", 0xE000EDA0,        4, base=16,    bitRange=19-21
+sfr = "MPU_RASR.AP"        , "Memory", 0xE000EDA0,        4, base=16,    bitRange=24-26
+sfr = "MPU_RASR.XN"        , "Memory", 0xE000EDA0,        4, base=16,    bitRange=28-28
+
+sfr = "MPU_RBAR_A1"        , "Memory", 0xE000EDA4,        4, base=16
+sfr = "MPU_RBAR_A1.REGION" , "Memory", 0xE000EDA4,        4, base=16,    bitRange=0-3
+sfr = "MPU_RBAR_A1.VALID"  , "Memory", 0xE000EDA4,        4, base=16,    bitRange=4-4
+sfr = "MPU_RBAR_A1.ADDR"   , "Memory", 0xE000EDA4,        4, base=16,    bitRange=5-31
+
+sfr = "MPU_RASR_A1"        , "Memory", 0xE000EDA8,        4, base=16
+sfr = "MPU_RASR_A1.ENABLE" , "Memory", 0xE000EDA8,        4, base=16,    bitRange=0-0
+sfr = "MPU_RASR_A1.SIZE"   , "Memory", 0xE000EDA8,        4, base=16,    bitRange=1-5
+sfr = "MPU_RASR_A1.SRD"    , "Memory", 0xE000EDA8,        4, base=16,    bitRange=8-15
+sfr = "MPU_RASR_A1.B"      , "Memory", 0xE000EDA8,        4, base=16,    bitRange=16-16
+sfr = "MPU_RASR_A1.C"      , "Memory", 0xE000EDA8,        4, base=16,    bitRange=17-17
+sfr = "MPU_RASR_A1.S"      , "Memory", 0xE000EDA8,        4, base=16,    bitRange=18-18
+sfr = "MPU_RASR_A1.TEX"    , "Memory", 0xE000EDA8,        4, base=16,    bitRange=19-21
+sfr = "MPU_RASR_A1.AP"     , "Memory", 0xE000EDA8,        4, base=16,    bitRange=24-26
+sfr = "MPU_RASR_A1.XN"     , "Memory", 0xE000EDA8,        4, base=16,    bitRange=28-28
+
+sfr = "MPU_RBAR_A2"        , "Memory", 0xE000EDAC,        4, base=16
+sfr = "MPU_RBAR_A2.REGION" , "Memory", 0xE000EDAC,        4, base=16,    bitRange=0-3
+sfr = "MPU_RBAR_A2.VALID"  , "Memory", 0xE000EDAC,        4, base=16,    bitRange=4-4
+sfr = "MPU_RBAR_A2.ADDR"   , "Memory", 0xE000EDAC,        4, base=16,    bitRange=5-31
+
+sfr = "MPU_RASR_A2"        , "Memory", 0xE000EDB0,        4, base=16
+sfr = "MPU_RASR_A2.ENABLE" , "Memory", 0xE000EDB0,        4, base=16,    bitRange=0-0
+sfr = "MPU_RASR_A2.SIZE"   , "Memory", 0xE000EDB0,        4, base=16,    bitRange=1-5
+sfr = "MPU_RASR_A2.SRD"    , "Memory", 0xE000EDB0,        4, base=16,    bitRange=8-15
+sfr = "MPU_RASR_A2.B"      , "Memory", 0xE000EDB0,        4, base=16,    bitRange=16-16
+sfr = "MPU_RASR_A2.C"      , "Memory", 0xE000EDB0,        4, base=16,    bitRange=17-17
+sfr = "MPU_RASR_A2.S"      , "Memory", 0xE000EDB0,        4, base=16,    bitRange=18-18
+sfr = "MPU_RASR_A2.TEX"    , "Memory", 0xE000EDB0,        4, base=16,    bitRange=19-21
+sfr = "MPU_RASR_A2.AP"     , "Memory", 0xE000EDB0,        4, base=16,    bitRange=24-26
+sfr = "MPU_RASR_A2.XN"     , "Memory", 0xE000EDB0,        4, base=16,    bitRange=28-28
+
+sfr = "MPU_RBAR_A3"        , "Memory", 0xE000EDB4,        4, base=16
+sfr = "MPU_RBAR_A3.REGION" , "Memory", 0xE000EDB4,        4, base=16,    bitRange=0-3
+sfr = "MPU_RBAR_A3.VALID"  , "Memory", 0xE000EDB4,        4, base=16,    bitRange=4-4
+sfr = "MPU_RBAR_A3.ADDR"   , "Memory", 0xE000EDB4,        4, base=16,    bitRange=5-31
+
+sfr = "MPU_RASR_A3"        , "Memory", 0xE000EDB8,        4, base=16
+sfr = "MPU_RASR_A3.ENABLE" , "Memory", 0xE000EDB8,        4, base=16,    bitRange=0-0
+sfr = "MPU_RASR_A3.SIZE"   , "Memory", 0xE000EDB8,        4, base=16,    bitRange=1-5
+sfr = "MPU_RASR_A3.SRD"    , "Memory", 0xE000EDB8,        4, base=16,    bitRange=8-15
+sfr = "MPU_RASR_A3.B"      , "Memory", 0xE000EDB8,        4, base=16,    bitRange=16-16
+sfr = "MPU_RASR_A3.C"      , "Memory", 0xE000EDB8,        4, base=16,    bitRange=17-17
+sfr = "MPU_RASR_A3.S"      , "Memory", 0xE000EDB8,        4, base=16,    bitRange=18-18
+sfr = "MPU_RASR_A3.TEX"    , "Memory", 0xE000EDB8,        4, base=16,    bitRange=19-21
+sfr = "MPU_RASR_A3.AP"     , "Memory", 0xE000EDB8,        4, base=16,    bitRange=24-26
+sfr = "MPU_RASR_A3.XN"     , "Memory", 0xE000EDB8,        4, base=16,    bitRange=28-28
