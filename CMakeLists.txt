@@ -64,7 +64,7 @@ target_sources(hc32f4a0_driver PRIVATE ${Drivers_Sources})
 target_link_libraries(hc32f4a0_driver PUBLIC hc32f4a0)
 
 # Add libraries to the project
-target_link_libraries(${CMAKE_PROJECT_NAME} hc32f4a0_driver)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE hc32f4a0_driver)
 
 
 # Add the map file to the list of files to be removed with 'clean' target
