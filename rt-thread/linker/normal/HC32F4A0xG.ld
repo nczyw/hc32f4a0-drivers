@@ -201,7 +201,7 @@ SECTIONS
         *(.noinit*)
         . = ALIGN(4);
     } >RAM
-
+    __bss_end = .;
     .ramb_bss :
     {
         . = ALIGN(4);
