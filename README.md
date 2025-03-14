@@ -6,6 +6,7 @@
  - bootloader模式下,flash前128KB为bootloader,其余为app.
  - 添加了`printf`支持浮点打印.
  - 当使用gcc-arm-none-eabi,11及以上版本的编译器时，编译时会出现`LOAD segment with RWX permissions 警告`,`toolchain`中可以忽略这个警告，但是忽略参数11版本以下的又不支持,所以保留了这个警告,修改链接脚本也可以消除此警告,但是同样不支持11版本以下的编译器,固没做修改.
+ - 使用严格的编程模式,任何警告都视为错误,停止编译,可以养成好编程习惯.
 ## 修改内容
  - `hc32_ll_can.c`中`const static uint8_t m_au8DLC2WordSize[16U]`修改为`static const uint8_t m_au8DLC2WordSize[16U] `将`static`放在最前面,以规范代码,去除警告.
  - 当有`rt-thread`
