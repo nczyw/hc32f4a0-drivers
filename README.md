@@ -19,7 +19,7 @@
   - 安装MinGW编译器,如果是是解压类型,解压后把bin目录加入到环境变量中.
 - [gcc-arm-none-eabi下载](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
   - 安装gcc-arm-none-eabi,如果是解压型的,解压后把bin目录加入到环境变量中.
-- [pyOCD安装方法](https://github.com/pyocd/pyOCD),这是下载和高度mcu的工具,只编译的话,不需要.
+- [pyOCD安装方法](https://github.com/pyocd/pyOCD),这是下载和调试mcu的工具,只编译的话,不需要.
   - 还可以安装libusb,来显示更多调试信息,比如断言.
 ## Cmake 配置例子
 ``` cmake
