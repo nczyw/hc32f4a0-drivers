@@ -84,12 +84,10 @@ set(DEFINES
 
 file(GLOB SOURCES
     # Add user source files
-    "${CMAKE_CURRENT_LIST_DIR}/src/*.c"
 )
 
 set(HEADERS
     # Add user headers
-    "${CMAKE_CURRENT_LIST_DIR}/inc"
 )
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     ${DEFINES}
