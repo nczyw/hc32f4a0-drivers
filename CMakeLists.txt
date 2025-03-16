@@ -8,7 +8,7 @@ set(Drivers_Defines
     __DEBUG
 )
 
-# 驱动头文件
+# Drivers Hearders
 set(Drivers_Hearers
     "${CMAKE_CURRENT_LIST_DIR}/mcu/inc"
     "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/inc"
@@ -16,7 +16,7 @@ set(Drivers_Hearers
     "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Include"
 )
 
-# 源文件
+# Drivers Sources
 file(GLOB Drivers_Sources
 #    "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/GCC/startup_hc32f4a0.S"
     "${CMAKE_CURRENT_LIST_DIR}/cmsis/Device/HDSC/hc32f4xx/Source/system_hc32f4a0.c"

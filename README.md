@@ -36,7 +36,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME myproject)
+set(CMAKE_PROJECT_NAME myporject)
 
 # Driver function selection
 set(MCU_TYPE "HC32F4A0xI" CACHE STRING "Set MCU Type")
@@ -51,7 +51,7 @@ include("drivers/toolchain/gcc-arm-none-eabi.cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # Core project settings
-project(${CMAKE_PROJECT_NAME})
+project(${CMAKE_PROJECT_NAME} VERSION 1.0.0)
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Enable CMake support for ASM and C languages
@@ -72,20 +72,28 @@ add_custom_command(
 # Include the drivers,Drivers can be loaded using the submodule management method, which is recommended.
 add_subdirectory("drivers")
 
-# Add User source files
-file(GLOB SOURCES
-     # Add user sources here
+set(DEFINES
+    # Add user defines
 )
 
-# Add User headers
+# Add user source files
+file(GLOB SOURCES
+    # Add user source files
+    "${CMAKE_CURRENT_LIST_DIR}/src/*.c"
+)
+
 set(HEADERS
-    # Add user defined library search paths
+    # Add user headers
+    "${CMAKE_CURRENT_LIST_DIR}/inc"
+)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
+    ${DEFINES}
 )
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    "${SOURCES}"
+    ${SOURCES}
 )
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    "${HEADERS}"
+    ${HEADERS}
 )
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
