@@ -12,6 +12,7 @@
  - 当有`rt-thread`
    - 修改了`startup_hc32f4a0.S`中`bl main`修改为`bl entry`来支持`rt-thread`系统.
    - 修改了`HC32F4A0xI.ld`和`HC32F4A0xG.ld`链接脚本,来支持`rt-thread`系统相关自动初始化函数,来保证不被编译器优化.
+   - 去除了usb驱动,需要其它文件,还没研究.
 ## 使用前准备
 - [Cmake下载](https://cmake.org/download/)
   - 安装Cmake,会自动将cmake安装到环境变量中,如果`cmake`提示未找到要手动将cmake的bin目录加入到环境变量中.
@@ -22,7 +23,12 @@
 - [pyOCD安装方法](https://github.com/pyocd/pyOCD),这是下载和调试mcu的工具,只编译的话,不需要.
   - 还可以安装libusb,来显示更多调试信息,比如断言.
 ## Cmake 配置例子
-``` cmake
+ - 在自己的项目中添加本驱动
+ ```bash
+ git submodule add https://github.com/nczyw/hc32f4a0-drivers.git drivers
+ ```
+ - 项目CMake例子
+```cmake
 cmake_minimum_required(VERSION 3.27)
 
 # Setup compiler settings
@@ -36,7 +42,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME myporject)
+set(CMAKE_PROJECT_NAME myproject)
 
 # Driver function selection
 set(MCU_TYPE "HC32F4A0xI" CACHE STRING "Set MCU Type")
@@ -76,7 +82,6 @@ set(DEFINES
     # Add user defines
 )
 
-# Add user source files
 file(GLOB SOURCES
     # Add user source files
     "${CMAKE_CURRENT_LIST_DIR}/src/*.c"
@@ -94,9 +99,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 )
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${HEADERS}
-)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
 )
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined libraries
