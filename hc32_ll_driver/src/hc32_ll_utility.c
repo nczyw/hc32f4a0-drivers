@@ -340,7 +340,7 @@ size_t __dwrite(int handle, const unsigned char *buffer, size_t size)
  * @param  [in] size
  * @retval int32_t
  */
-__WEAKDEF int32_t _write(int fd, char data[], int32_t size)
+int32_t _write(int fd, char data[], int32_t size)
 {
     int32_t i = -1;
 
