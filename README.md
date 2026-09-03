@@ -20,8 +20,8 @@
 ## 使用前准备
 - [Cmake下载](https://cmake.org/download/)
   - 安装Cmake,会自动将cmake安装到环境变量中,如果`cmake`提示未找到要手动将cmake的bin目录加入到环境变量中.
-- [MinGW下载](https://github.com/niXman/mingw-builds-binaries/releases)
-  - 安装MinGW编译器,如果是是解压类型,解压后把bin目录加入到环境变量中.
+- [Ninja下载](https://github.com/ninja-build/ninja/releases/)
+  - 安装Ninja,如果是是解压类型,解压后把目录加入到环境变量中.
 - [gcc-arm-none-eabi下载](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads)
   - 安装gcc-arm-none-eabi,如果是解压型的,解压后把bin目录加入到环境变量中.
 - [pyOCD安装方法](https://github.com/pyocd/pyOCD),这是下载和调试mcu的工具,只编译的话,不需要.
@@ -48,10 +48,10 @@
  mkdir build
  cd build
  # 编译(linux)
- cmake -DCMAKE_BUILD_TYPE=Release ..
+ cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja
  cmake --build .
  # 编译(windows)
- cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" ..
+ cmake -DCMAKE_BUILD_TYPE=Release .. -G Ninja 
  cmake --build .
  # 烧写
  pyocd flash -t hc32f4a0xi myproject.elf
