@@ -141,3 +141,23 @@ int _execve(char *name, char **argv, char **env)
   errno = ENOMEM;
   return -1;
 }
+
+
+extern char end;  
+
+void *_sbrk(ptrdiff_t incr)
+{
+    static char *heap_end = NULL;
+    char *prev_heap_end;
+    if (heap_end == NULL) {
+        heap_end = &end;  
+    }
+    prev_heap_end = heap_end;
+    extern char __StackLimit;  
+    if (heap_end + incr > &__StackLimit) {
+        errno = ENOMEM;
+        return (void *)-1;
+    }
+    heap_end += incr;
+    return (void *)prev_heap_end;
+}

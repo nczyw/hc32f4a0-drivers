@@ -169,6 +169,10 @@ SECTIONS
         __data_end_ramb__ = .;
     } >RAMB
 
+    __app_start = ORIGIN(FLASH);
+    __app_end   = LOADADDR(.ramb_data) + SIZEOF(.ramb_data);
+    __app_size  = __app_end - __app_start;
+
     .bss (NOLOAD):
     {
         . = ALIGN(4);

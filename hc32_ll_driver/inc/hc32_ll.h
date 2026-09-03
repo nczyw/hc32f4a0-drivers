@@ -203,6 +203,7 @@ extern "C"
 
 #if (LL_HASH_ENABLE == DDL_ON)
 #include "hc32_ll_hash.h"
+#include "hc32_ll_hash_ex.h"
 #endif /* LL_HASH_ENABLE */
 
 #if (LL_HRPWM_ENABLE == DDL_ON)
