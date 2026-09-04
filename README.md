@@ -71,7 +71,31 @@
             ]
         }
     ]
-}
+ }
+ ``` 
+ - VsCode中调试工具:`Cortex-Debug`, 配置如下,`overrideGDBServerStartedRegex`这个是启动成功提示,如果有问题再加上
+ ```json
+  {
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "./build/hc32f4a0-bootloader.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "pyocd",
+            "targetId": "hc32f4a0xi",
+            "gdbPath": "arm-none-eabi-gdb",
+            //"overrideGDBServerStartedRegex": "GDB server listening on port"
+        }
+    ]
+ }
  ```
  - 项目CMake例子
 ```cmake
