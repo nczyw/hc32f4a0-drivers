@@ -17,6 +17,7 @@
 - 添加`hc32_ll_hash_ex`驱动文件,实现了`sha256`和 `hmac` 分段添加并运算功能.
 - 链接脚本中添加了`__app_start`,`__app_end`,`__app_size`,用来指示当前固件在flash中开始地址,结束地址,大小,方便用来校验固件,使用方法:`extern char __app_size;`,`static uint32_t firmware_size  = (uint32_t)&__app_size;`
 - 添加了`set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`生成`compile_commands.json`文件,用于代码补全.
+- toolchain中添加了对版本号和git的支持, 编译的文件名自动会包含版本号`FIRMWARE_NAME` 不定义时,默认使用`CMAKE_PROJECT_NAME`
 ## 使用前准备
 - [Cmake下载](https://cmake.org/download/)
   - 安装Cmake,会自动将cmake安装到环境变量中,如果`cmake`提示未找到要手动将cmake的bin目录加入到环境变量中.
@@ -29,6 +30,7 @@
 - pyocd烧写方法:`pyocd flash -t hc32f4a0xi firmware.elf`
 ## Cmake 配置例子
  - 在自己的项目中添加本驱动
+ - cmake例子中, 添加了`FIRMWARE_VERSION_STR`和`FIRMWARE_VERSION` , 用来演示设置版本号例子, 添加了执行`clean`时也自动删除带版本号的map文件
  - 添加了`PROJECT_VERSION_MAJOR`,`PROJECT_VERSION_MINOR`,`PROJECT_VERSION_PATCH` 宏定义, 下面是使用一个`uint32_t`来表示版本的示例
  ```c
  uint32_t version_get(void){
@@ -116,6 +118,25 @@ endif()
 # Set the project name
 set(CMAKE_PROJECT_NAME myproject)
 
+set(FIRMWARE_VERSION_STR "1.0.0")
+set(FIRMWARE_VERSION "${FIRMWARE_VERSION_STR}")
+find_program(GIT_EXECUTABLE git)
+if(GIT_EXECUTABLE)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE GIT_RESULT
+        ERROR_QUIET
+    )
+    if(GIT_RESULT EQUAL 0 AND GIT_VERSION)
+        set(FIRMWARE_VERSION "${FIRMWARE_VERSION_STR}-${GIT_VERSION}")
+    endif()
+endif()
+set(FIRMWARE_NAME "${CMAKE_PROJECT_NAME}-${FIRMWARE_VERSION}")
+message(STATUS "Firmware name: ${FIRMWARE_NAME}")
+
 # Driver function selection
 set(MCU_TYPE "HC32F4A0xI" CACHE STRING "Set MCU Type")
 set(BOOTLOADER OFF CACHE BOOL "Set to ON if bootloader is enabled")
@@ -137,16 +158,26 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
+
+set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+    OUTPUT_NAME ${FIRMWARE_NAME}
+    ADDITIONAL_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/${FIRMWARE_NAME}.map"
+)
+
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/${FIRMWARE_NAME}.map"
+)
 # "Generate hex and bin files and associate them with the clean target."
 add_custom_command(
     TARGET ${CMAKE_PROJECT_NAME}
     POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.hex
-        COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.bin
+        COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${FIRMWARE_NAME}.hex
+        COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${FIRMWARE_NAME}.bin
     BYPRODUCTS 
-        ${CMAKE_PROJECT_NAME}.hex
-        ${CMAKE_PROJECT_NAME}.bin
+        ${FIRMWARE_NAME}.hex
+        ${FIRMWARE_NAME}.bin
 )
+
 # Include the drivers,Drivers can be loaded using the submodule management method, which is recommended.
 add_subdirectory("drivers")
 
