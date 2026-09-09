@@ -50,6 +50,7 @@ static int32_t HASH_WaitStart(void)
  */
 static void HASH_WriteDataGroup(const uint8_t *pu8Data)
 {
+    /*
     __IO uint32_t *regDR = &CM_HASH->DR0;    
     uint32_t u32Data;
 
@@ -59,6 +60,12 @@ static void HASH_WriteDataGroup(const uint8_t *pu8Data)
                      sizeof(u32Data));
 
         regDR[i] = __REV(u32Data);          
+    }
+    */
+   __IO uint32_t *regDR = &CM_HASH->DR15;   // 关键：从 DR15 开始
+    const uint32_t *pu32Data = (const uint32_t *)pu8Data;
+    for (uint8_t i = 0U; i < HASH_GROUP_SIZE_WORD; i++) {
+        regDR[i] = __REV(pu32Data[i]);       // 注意：直接使用指针访问
     }
 }
 
@@ -133,7 +140,8 @@ static int32_t HASH_ProcessBuffer(stc_hash_ctx_t *pCtx, uint8_t bLast)
 
         if (len < HASH_LAST_GROUP_SIZE_MAX) {
             for (uint8_t i = 0; i < 8; i++) {
-                fillBuf[56 + i] = (uint8_t)(bitLen >> (i * 8));
+                //fillBuf[56 + i] = (uint8_t)(bitLen >> (i * 8));
+                fillBuf[56 + i] = (uint8_t)(bitLen >> ((7 - i) * 8));
             }
             HASH_WriteDataGroup(fillBuf);
             uint32_t flags = HASH_CR_KMSG_END | HASH_FLAG_CLR_ALL;
@@ -156,7 +164,8 @@ static int32_t HASH_ProcessBuffer(stc_hash_ctx_t *pCtx, uint8_t bLast)
 
             HASH_MemSet(fillBuf, 0U, HASH_GROUP_SIZE);
             for (uint8_t i = 0; i < 8; i++) {
-                fillBuf[56 + i] = (uint8_t)(bitLen >> (i * 8));
+                //fillBuf[56 + i] = (uint8_t)(bitLen >> (i * 8));
+                fillBuf[56 + i] = (uint8_t)(bitLen >> ((7 - i) * 8));
             }
             HASH_WriteDataGroup(fillBuf);
             SET_REG32_BIT(CM_HASH->CR, HASH_CR_KMSG_END | HASH_FLAG_CLR_ALL | HASH_CR_START); // 关键修复
@@ -196,7 +205,7 @@ static int32_t HASH_ProcessBuffer(stc_hash_ctx_t *pCtx, uint8_t bLast)
 int32_t HASH_Init_Ex(stc_hash_ctx_t *pCtx)
 {
     if (pCtx == NULL) return LL_ERR_INVD_PARAM;
-
+    (void)HASH_DeInit();
     pCtx->buffer_len = 0U;
     pCtx->total_len  = 0U;
     pCtx->started    = 0U;
