@@ -141,13 +141,13 @@ if(GIT_EXECUTABLE)
     )
     
     if(HASH_RESULT EQUAL 0 AND GIT_HASH)
-        set(FIRMWARE_VERSION "${GIT_HASH}")
+        set(FIRMWARE_VERSION "-${GIT_HASH}")
         if(GIT_STATUS)
-            set(FIRMWARE_VERSION "${FIRMWARE_VERSION}-dirty")
+            set(FIRMWARE_VERSION "-${FIRMWARE_VERSION}-dirty")
         endif()
     endif()
 endif()
-set(FIRMWARE_NAME "${CMAKE_PROJECT_NAME}-v${FIRMWARE_VERSION_STR}-${FIRMWARE_VERSION}")
+set(FIRMWARE_NAME "${CMAKE_PROJECT_NAME}-v${FIRMWARE_VERSION_STR}${FIRMWARE_VERSION}")
 message(STATUS "Firmware name: ${FIRMWARE_NAME}")
 
 # Driver function selection
@@ -173,7 +173,7 @@ enable_language(C ASM)
 add_executable(${CMAKE_PROJECT_NAME})
 
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
-    OUTPUT_NAME ${FIRMWARE_NAME}
+    OUTPUT_NAME ${CMAKE_PROJECT_NAME}
     ADDITIONAL_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/${FIRMWARE_NAME}.map"
 )
 
