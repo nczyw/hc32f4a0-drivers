@@ -30,7 +30,7 @@
 - pyocd烧写方法:`pyocd flash -t hc32f4a0xi firmware.elf`
 ## Cmake 配置例子
  - 在自己的项目中添加本驱动
- - cmake例子中, 添加了`FIRMWARE_VERSION_STR`和`FIRMWARE_VERSION` , 用来演示设置版本号例子, 添加了执行`clean`时也自动删除带版本号的map文件
+ - cmake例子中, 添加了`FIRMWARE_VERSION_STR`和`FIRMWARE_VERSION` , 用来演示设置版本号例子, 添加了执行`clean`时也自动删除带版本号的map文件,但是elf文件不带任何后缀,如果elf文件我名字一直变,对调试器非常不友好
  - 添加了`PROJECT_VERSION_MAJOR`,`PROJECT_VERSION_MINOR`,`PROJECT_VERSION_PATCH` 宏定义, 下面是使用一个`uint32_t`来表示版本的示例
  ```c
  uint32_t version_get(void){
@@ -119,22 +119,35 @@ endif()
 set(CMAKE_PROJECT_NAME myproject)
 
 set(FIRMWARE_VERSION_STR "1.0.0")
-set(FIRMWARE_VERSION "${FIRMWARE_VERSION_STR}")
+set(FIRMWARE_VERSION "")
 find_program(GIT_EXECUTABLE git)
 if(GIT_EXECUTABLE)
+    # only hash
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_VERSION
+        OUTPUT_VARIABLE GIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE GIT_RESULT
+        RESULT_VARIABLE HASH_RESULT
         ERROR_QUIET
     )
-    if(GIT_RESULT EQUAL 0 AND GIT_VERSION)
-        set(FIRMWARE_VERSION "${FIRMWARE_VERSION_STR}-${GIT_VERSION}")
+    
+    # check dirty
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} status --porcelain
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_STATUS
+        ERROR_QUIET
+    )
+    
+    if(HASH_RESULT EQUAL 0 AND GIT_HASH)
+        set(FIRMWARE_VERSION "${GIT_HASH}")
+        if(GIT_STATUS)
+            set(FIRMWARE_VERSION "${FIRMWARE_VERSION}-dirty")
+        endif()
     endif()
 endif()
-set(FIRMWARE_NAME "${CMAKE_PROJECT_NAME}-${FIRMWARE_VERSION}")
+set(FIRMWARE_NAME "${CMAKE_PROJECT_NAME}-v${FIRMWARE_VERSION_STR}-${FIRMWARE_VERSION}")
 message(STATUS "Firmware name: ${FIRMWARE_NAME}")
 
 # Driver function selection

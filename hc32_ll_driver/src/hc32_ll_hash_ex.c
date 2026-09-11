@@ -16,7 +16,7 @@ static void HASH_WriteDataGroup(const uint8_t *pu8Data);
 static void HASH_MemSet(uint8_t *pDest, uint8_t val, uint32_t len);
 static void HASH_MemCopy(uint8_t *pDest, const uint8_t *pSrc, uint32_t len);
 static int32_t HASH_ProcessBuffer(stc_hash_ctx_t *pCtx, uint8_t bLast);
-static int32_t HMAC_PrepareKey(const uint8_t *pKey, uint32_t u32KeyLen, uint8_t *k0);
+static int32_t HMAC_ProcessMessage(stc_hash_ctx_t *pCtx, uint8_t bLast);
 
 /**
  * @brief  Wait for the HASH operation to complete by polling the START flag.
@@ -291,32 +291,99 @@ int32_t HASH_Final_Ex(stc_hash_ctx_t *pCtx, uint8_t *pu8MsgDigest)
 
 
 /**
- * @brief  Prepare the HMAC key material (k0) according to RFC 2104.
- *         If the key length is greater than 64 bytes, it is first hashed using
- *         SHA256, then padded with zeros to 64 bytes. Otherwise, the key is
- *         copied directly and padded with zeros to 64 bytes.
- *
- * @param  [in]  pKey       Pointer to the secret key buffer.
- * @param  [in]  u32KeyLen  Length of the secret key in bytes.
- * @param  [out] k0         Output buffer of 64 bytes for the prepared key.
- *
- * @retval int32_t   LL_OK on success, or LL_ERR_TIMEOUT if hardware timeout.
+ * @brief  Process HMAC message block in hardware HMAC mode.
+ *         The key has already been written into HASH hardware in HMAC_Init_Ex().
+ *         This function only feeds message data and handles SHA256 padding.
  */
-static int32_t HMAC_PrepareKey(const uint8_t *pKey, uint32_t u32KeyLen, uint8_t *k0)
+static int32_t HMAC_ProcessMessage(stc_hash_ctx_t *pCtx, uint8_t bLast)
 {
-    uint8_t tmpDigest[32];
+    uint8_t fillBuf[HASH_GROUP_SIZE];
+    uint32_t len = pCtx->buffer_len;
     int32_t ret;
 
-    if (u32KeyLen > 64U) {
-       
-        ret = HASH_Calculate(pKey, u32KeyLen, tmpDigest);   
-        if (ret != LL_OK) return ret;
-        HASH_MemCopy(k0, tmpDigest, 32);
-        HASH_MemSet(k0 + 32, 0U, 32); 
-    } else {
-        HASH_MemCopy(k0, pKey, u32KeyLen);
-        HASH_MemSet(k0 + u32KeyLen, 0U, 64U - u32KeyLen);
+    if ((len == 0U) && (bLast == 0U)) {
+        return LL_OK;
     }
+
+    if (bLast != 0U) {
+        HASH_MemSet(fillBuf, 0U, HASH_GROUP_SIZE);
+        if (len > 0U) {
+            HASH_MemCopy(fillBuf, pCtx->buffer, len);
+        }
+        fillBuf[len] = 0x80U;
+
+        uint64_t bitLen = pCtx->total_len << 3;
+
+        if (len < HASH_LAST_GROUP_SIZE_MAX) {
+            for (uint8_t i = 0U; i < 8U; i++) {
+                fillBuf[56U + i] = (uint8_t)(bitLen >> ((7U - i) * 8U));
+            }
+
+            HASH_WriteDataGroup(fillBuf);
+
+            uint32_t flags = HASH_CR_KMSG_END | HASH_FLAG_CLR_ALL;
+            if (pCtx->started == 0U) {
+                flags |= HASH_CR_FST_GRP;
+            }
+            SET_REG32_BIT(CM_HASH->CR, flags | HASH_CR_START);
+
+            ret = HASH_WaitStart();
+            if (ret != LL_OK) {
+                return ret;
+            }
+        } else {
+            HASH_WriteDataGroup(fillBuf);
+
+            uint32_t flags = HASH_FLAG_CLR_ALL;
+            if (pCtx->started == 0U) {
+                flags |= HASH_CR_FST_GRP;
+            }
+            SET_REG32_BIT(CM_HASH->CR, flags | HASH_CR_START);
+
+            ret = HASH_WaitStart();
+            if (ret != LL_OK) {
+                return ret;
+            }
+            pCtx->started = 1U;
+
+            HASH_MemSet(fillBuf, 0U, HASH_GROUP_SIZE);
+            for (uint8_t i = 0U; i < 8U; i++) {
+                fillBuf[56U + i] = (uint8_t)(bitLen >> ((7U - i) * 8U));
+            }
+
+            HASH_WriteDataGroup(fillBuf);
+            SET_REG32_BIT(CM_HASH->CR,
+                          HASH_CR_KMSG_END | HASH_FLAG_CLR_ALL | HASH_CR_START);
+
+            ret = HASH_WaitStart();
+            if (ret != LL_OK) {
+                return ret;
+            }
+        }
+
+        pCtx->finished = 1U;
+    } else {
+        if (len != HASH_GROUP_SIZE) {
+            return LL_ERR_INVD_PARAM;
+        }
+
+        HASH_WriteDataGroup(pCtx->buffer);
+
+        uint32_t flags = HASH_FLAG_CLR_ALL;
+        if (pCtx->started == 0U) {
+            flags |= HASH_CR_FST_GRP;
+        }
+        SET_REG32_BIT(CM_HASH->CR, flags | HASH_CR_START);
+
+        ret = HASH_WaitStart();
+        if (ret != LL_OK) {
+            return ret;
+        }
+
+        pCtx->started = 1U;
+        pCtx->buffer_len = 0U;
+    }
+
     return LL_OK;
 }
 
@@ -337,20 +404,46 @@ static int32_t HMAC_PrepareKey(const uint8_t *pKey, uint32_t u32KeyLen, uint8_t 
 int32_t HMAC_Init_Ex(stc_hmac_ctx_t *pCtx, const uint8_t *pKey, uint32_t u32KeyLen)
 {
     int32_t ret;
-    uint8_t ipad_key[64];
 
-    if (pCtx == NULL || pKey == NULL || u32KeyLen == 0U) return LL_ERR_INVD_PARAM;
-
-    ret = HMAC_PrepareKey(pKey, u32KeyLen, pCtx->k0);
-    if (ret != LL_OK) return ret;
-
-    for (uint8_t i = 0U; i < 64U; i++) {
-        ipad_key[i] = pCtx->k0[i] ^ IPAD_CONST;
+    if ((pCtx == NULL) || (pKey == NULL) || (u32KeyLen == 0U)) {
+        return LL_ERR_INVD_PARAM;
     }
-    ret = HASH_Init_Ex(&pCtx->inner_ctx);
-    if (ret != LL_OK) return ret;
-    ret = HASH_Update_Ex(&pCtx->inner_ctx, ipad_key, 64);
-    if (ret != LL_OK) return ret;
+
+    if (u32KeyLen > 64U) {
+        ret = HASH_Calculate(pKey, u32KeyLen, pCtx->k0);
+        if (ret != LL_OK) {
+            return ret;
+        }
+        HASH_MemSet(pCtx->k0 + 32U, 0U, 32U);
+    } else {
+        HASH_MemCopy(pCtx->k0, pKey, u32KeyLen);
+        HASH_MemSet(pCtx->k0 + u32KeyLen, 0U, 64U - u32KeyLen);
+    }
+
+    (void)HASH_DeInit();
+
+    ret = HASH_SetMode(HASH_MD_HMAC);
+    if (ret != LL_OK) {
+        return ret;
+    }
+
+    HASH_WriteDataGroup(pCtx->k0);
+
+    SET_REG32_BIT(CM_HASH->CR, HASH_MSG_GRP_ONLY_ONE | HASH_FLAG_CLR_ALL);
+    SET_REG32_BIT(CM_HASH->CR, HASH_CR_START | HASH_FLAG_CLR_ALL);
+
+    ret = HASH_WaitStart();
+    if (ret != LL_OK) {
+        return ret;
+    }
+
+    MODIFY_REG32(CM_HASH->CR, HASH_FLAG_CLR_ALL, ~HASH_FLAG_CYC_END);
+
+    pCtx->inner_ctx.buffer_len = 0U;
+    pCtx->inner_ctx.total_len  = 0U;
+    pCtx->inner_ctx.started    = 0U;
+    pCtx->inner_ctx.finished   = 0U;
+    HASH_MemSet(pCtx->inner_ctx.buffer, 0U, HASH_GROUP_SIZE);
 
     pCtx->state = 1U;
     return LL_OK;
@@ -370,10 +463,44 @@ int32_t HMAC_Init_Ex(stc_hmac_ctx_t *pCtx, const uint8_t *pKey, uint32_t u32KeyL
  */
 int32_t HMAC_Update_Ex(stc_hmac_ctx_t *pCtx, const uint8_t *pData, uint32_t u32Len)
 {
-    if (pCtx == NULL || pData == NULL || u32Len == 0U) return LL_ERR_INVD_PARAM;
-    if (pCtx->state != 1U) return LL_ERR_INVD_PARAM;
+    int32_t ret;
+    uint32_t offset = 0U;
 
-    return HASH_Update_Ex(&pCtx->inner_ctx, pData, u32Len);
+    if (pCtx == NULL) {
+        return LL_ERR_INVD_PARAM;
+    }
+    if (pCtx->state != 1U) {
+        return LL_ERR_INVD_PARAM;
+    }
+    if ((pData == NULL) && (u32Len != 0U)) {
+        return LL_ERR_INVD_PARAM;
+    }
+    if (u32Len == 0U) {
+        return LL_OK;
+    }
+
+    pCtx->inner_ctx.total_len += u32Len;
+
+    while (offset < u32Len) {
+        uint32_t space = HASH_GROUP_SIZE - pCtx->inner_ctx.buffer_len;
+        uint32_t copy = ((u32Len - offset) < space) ? (u32Len - offset) : space;
+
+        HASH_MemCopy(&pCtx->inner_ctx.buffer[pCtx->inner_ctx.buffer_len],
+                     &pData[offset],
+                     copy);
+
+        pCtx->inner_ctx.buffer_len += copy;
+        offset += copy;
+
+        if (pCtx->inner_ctx.buffer_len == HASH_GROUP_SIZE) {
+            ret = HMAC_ProcessMessage(&pCtx->inner_ctx, 0U);
+            if (ret != LL_OK) {
+                return ret;
+            }
+        }
+    }
+
+    return LL_OK;
 }
 
 /**
@@ -396,28 +523,35 @@ int32_t HMAC_Update_Ex(stc_hmac_ctx_t *pCtx, const uint8_t *pData, uint32_t u32L
 int32_t HMAC_Final_Ex(stc_hmac_ctx_t *pCtx, uint8_t *pu8MsgDigest)
 {
     int32_t ret;
-    uint8_t inner_hash[32];
-    uint8_t opad_key[64];
+    uint32_t u32TimeOut;
 
-    if (pCtx == NULL || pu8MsgDigest == NULL) return LL_ERR_INVD_PARAM;
-    if (pCtx->state != 1U) return LL_ERR_INVD_PARAM;
-
-    ret = HASH_Final_Ex(&pCtx->inner_ctx, inner_hash);
-    if (ret != LL_OK) return ret;
-
-    for (uint8_t i = 0U; i < 64U; i++) {
-        opad_key[i] = pCtx->k0[i] ^ OPAD_CONST;
+    if ((pCtx == NULL) || (pu8MsgDigest == NULL)) {
+        return LL_ERR_INVD_PARAM;
     }
-    ret = HASH_Init_Ex(&pCtx->outer_ctx);
-    if (ret != LL_OK) return ret;
-    ret = HASH_Update_Ex(&pCtx->outer_ctx, opad_key, 64);
-    if (ret != LL_OK) return ret;
+    if (pCtx->state != 1U) {
+        return LL_ERR_INVD_PARAM;
+    }
 
-    ret = HASH_Update_Ex(&pCtx->outer_ctx, inner_hash, 32);
-    if (ret != LL_OK) return ret;
+    ret = HMAC_ProcessMessage(&pCtx->inner_ctx, 1U);
+    if (ret != LL_OK) {
+        return ret;
+    }
 
-    ret = HASH_Final_Ex(&pCtx->outer_ctx, pu8MsgDigest);
-    if (ret != LL_OK) return ret;
+    u32TimeOut = HASH_TIMEOUT;
+    while (READ_REG32_BIT(CM_HASH->CR, HASH_FLAG_HMAC_END) == 0UL) {
+        if (--u32TimeOut == 0UL) {
+            return LL_ERR_TIMEOUT;
+        }
+    }
+
+    CLR_REG32_BIT(CM_HASH->CR, HASH_FLAG_CLR_ALL);
+
+    __IO uint32_t *regHR = &CM_HASH->HR7;
+    uint32_t *pDigest = (uint32_t *)((uint32_t)pu8MsgDigest);
+
+    for (uint8_t i = 0U; i < HASH_MSG_DIGEST_SIZE_WORD; i++) {
+        pDigest[i] = __REV(regHR[i]);
+    }
 
     pCtx->state = 2U;
     return LL_OK;
