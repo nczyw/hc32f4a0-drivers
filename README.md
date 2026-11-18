@@ -163,7 +163,7 @@ include("drivers/toolchain/gcc-arm-none-eabi.cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # Core project settings
-project(${CMAKE_PROJECT_NAME} VERSION 1.0.0)
+project(${CMAKE_PROJECT_NAME} VERSION ${FIRMWARE_VERSION})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Enable CMake support for ASM and C languages
