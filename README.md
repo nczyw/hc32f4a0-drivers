@@ -1,6 +1,6 @@
 # 小华单片机hc32f4a0系列cmake驱动
 ## 介绍
- - 驱动来自小华的2.2.3版本,修改了部分代码,添加了部分功能.
+ - 驱动来自小华的2.4版本,修改了部分代码,添加了部分功能.
  - 支持配置为`bootloader,app,normal`三种模式.
  - 还支持是否有`rt-thread`系统.
  - bootloader模式下,flash前128KB为bootloader,其余为app.
