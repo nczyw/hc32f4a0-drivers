@@ -6,7 +6,7 @@
 - 支持配置为`bootloader,app,normal`三种模式.
 - 还支持是否有`rt-thread`系统.
 - bootloader模式下,flash前128KB为bootloader,其余为app.
-- 添加了`printf`支持浮点打印.
+- printf和scanf 默认关闭, 来减少固件大小, 如有需要,可以在CMakeLists.txt中开启, 把ENABLE_PRINTF_FLOAT和ENABLE_SCANF_FLOAT设置为ON.
 - 当使用gcc-arm-none-eabi,11及以上版本的编译器时，编译时会出现`LOAD segment with RWX permissions 警告`,`toolchain`中可以忽略这个警告，是忽略参数11版本以下的又不支持,所以保留了这个警告,修改链接脚本也可以消除此警告,但是同样不支持11版本以下的编译器,固没做修改.
 - 使用严格的编程模式,任何警告都视为错误,停止编译,可以养成好编程习惯.
 - 将C库修改为`nano.specs`, 以前使用的`nosys.specs`使用C库一些函数后固件会变的非常大.
@@ -173,6 +173,9 @@ set(BOOTLOADER OFF CACHE BOOL "Set to ON if bootloader is enabled")
 set(APP OFF CACHE BOOL "Set to ON if app is enabled")
 set(RT-THREAD OFF CACHE BOOL "Set to ON if RT-Thread is enabled")
 
+# Enable printf and scanf float
+option(ENABLE_PRINTF_FLOAT "printf report %f" OFF)
+option(ENABLE_SCANF_FLOAT  "scanf report %f"  OFF)
 # Include toolchain file
 include("drivers/toolchain/gcc-arm-none-eabi.cmake")
 
