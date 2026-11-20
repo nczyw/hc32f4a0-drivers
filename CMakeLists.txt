@@ -23,7 +23,7 @@ file(GLOB Drivers_Sources
     "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/*.c"
     "${CMAKE_CURRENT_LIST_DIR}/mcu/src/*.c"
 )
-list(REMOVE_ITEM Drivers_Sources "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/hc32_ll_usb.c")
+#list(REMOVE_ITEM Drivers_Sources "${CMAKE_CURRENT_LIST_DIR}/hc32_ll_driver/src/hc32_ll_usb.c")
 
 if(BOOTLOADER AND APP)
     message(FATAL_ERROR "Cannot define both BOOTLOADER and APP. Choose only one.")

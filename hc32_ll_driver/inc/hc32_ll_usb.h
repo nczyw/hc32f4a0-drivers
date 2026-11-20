@@ -40,7 +40,12 @@ extern "C"
 #include "hc32f4xx.h"
 #include "hc32f4xx_conf.h"
 
-#include "usb_app_conf.h"
+
+#if defined(__has_include)
+#  if __has_include("usb_app_conf.h")
+#    include "usb_app_conf.h"
+#  endif
+#endif
 
 /**
  * @addtogroup LL_Driver
