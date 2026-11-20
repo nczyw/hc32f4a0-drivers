@@ -17,7 +17,7 @@
 - 当有`rt-thread`
   - 修改了`startup_hc32f4a0.S`中`bl main`修改为`bl entry`来支持`rt-thread`系统.
   - 修改了`HC32F4A0xI.ld`和`HC32F4A0xG.ld`链接脚本,来支持`rt-thread`系统相关自动初始化函数,来保证不被编译器优化.
-  - 恢复了 USB驱动支持, 修改了USB文件延时依赖; 使用USB时,必须要在顶层cmake中修改`option(USE_USB ON)`, 然后定义头文件, `usb_app_conf.h` .
+- 恢复了 USB驱动支持, 修改了USB文件延时依赖; 使用USB时,必须要在顶层cmake中修改`option(USE_USB ON)`, 然后定义头文件, `usb_app_conf.h` .
 - 添加`hc32_ll_hash_ex`驱动文件,实现了`sha256`和 `hmac` 分段添加并运算功能.
 - 链接脚本中添加了`__app_start`,`__app_end`,`__app_size`,用来指示当前固件在flash中开始地址,结束地址,大小,方便用来校验固件,使用方法:`extern char __app_size;`,`static uint32_t firmware_size  = (uint32_t)&__app_size;`
 - 添加了`set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`生成`compile_commands.json`文件,用于代码补全.
