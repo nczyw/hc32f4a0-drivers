@@ -18,10 +18,176 @@
   - 修改了`startup_hc32f4a0.S`中`bl main`修改为`bl entry`来支持`rt-thread`系统.
   - 修改了`HC32F4A0xI.ld`和`HC32F4A0xG.ld`链接脚本,来支持`rt-thread`系统相关自动初始化函数,来保证不被编译器优化.
 - 恢复了 USB驱动支持, 修改了USB文件延时依赖; 使用USB时,必须要在顶层cmake中修改`option(USE_USB ON)`, 然后定义头文件, `usb_app_conf.h` .
-- 添加`hc32_ll_hash_ex`驱动文件,实现了`sha256`和 `hmac` 分段添加并运算功能.
+- 添加`hc32_ll_hash_ex`驱动文件,实现了`SHA256`和`HMAC-SHA256`分段流式运算功能.
+- 添加`hc32_ll_aes_ex`驱动文件,实现了`ECB`/`CBC`/`CTR`模式下的分段流式AES加解密,ECB/CBC自动处理PKCS#7 padding.
 - 链接脚本中添加了`__app_start`,`__app_end`,`__app_size`,用来指示当前固件在flash中开始地址,结束地址,大小,方便用来校验固件,使用方法:`extern char __app_size;`,`static uint32_t firmware_size  = (uint32_t)&__app_size;`
 - 添加了`set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`生成`compile_commands.json`文件,用于代码补全.
 - toolchain中添加了对版本号和git的支持, 编译的文件名自动会包含版本号`FIRMWARE_NAME` 不定义时,默认使用`CMAKE_PROJECT_NAME`
+
+## 扩展驱动使用方法
+
+所有扩展驱动的状态都保存在**调用方自己持有的 ctx 结构体**里(栈上/静态/堆皆可),不使用文件级全局变量,因此不同上下文交替调用同一个扩展驱动不会互相踩状态.注意: **AES / HASH 硬件是全芯片单实例**,若两个任务同时发起计算,仍需外层互斥锁(OS mutex 或裸机临界区)保护硬件访问.
+
+### 依赖条件
+
+在 MCU 的 `hc32f4xx_conf.h` 中确保开启对应的开关:
+
+```c
+#define LL_HASH_ENABLE      DDL_ON
+#define LL_AES_ENABLE       DDL_ON
+```
+
+驱动已由 `drivers/CMakeLists.txt` 中的 `src/*.c` glob 自动纳入构建,无需额外添加源文件.
+
+### hc32_ll_hash_ex —— 流式 SHA256 / HMAC-SHA256
+
+头文件:`#include "hc32_ll_hash_ex.h"`
+
+**SHA256 流式(数据零散到达/固件大于 RAM 时):**
+
+```c
+#include "hc32_ll_hash_ex.h"
+
+stc_hash_ctx_t ctx;
+uint8_t digest[32];
+
+HASH_Init_Ex(&ctx);                   /* 重置硬件,初始化 ctx */
+
+HASH_Update_Ex(&ctx, chunk1, len1);  /* 第1段,比如 Flash 前 1KB */
+HASH_Update_Ex(&ctx, chunk2, len2);  /* 第2段 */
+HASH_Update_Ex(&ctx, chunk3, len3);  /* ... 每次长度不限 */
+
+HASH_Final_Ex(&ctx, digest);          /* 自动 padding,拿 32B 摘要 */
+```
+
+**HMAC-SHA256 流式:**
+
+```c
+stc_hmac_ctx_t ctx;
+uint8_t key[] = "my-secret-key";
+uint8_t hmac[32];
+
+HMAC_Init_Ex(&ctx, key, sizeof(key) - 1); /* >64B 的 key 内部先 HASH */
+HMAC_Update_Ex(&ctx, msg1, len1);
+HMAC_Update_Ex(&ctx, msg2, len2);
+HMAC_Final_Ex(&ctx, hmac);
+```
+
+> **原理**:HC32F4A0 的 HASH 硬件完成 SHA256 压缩运算,软件负责凑 64B 块和拼 FIPS 180-4 padding.HMAC 采用标准 RFC 2104 两次 SHA256 实现(`H(k0^opad || H(k0^ipad || msg))`).
+
+### hc32_ll_aes_ex —— 流式 AES (ECB / CBC / CTR)
+
+头文件:`#include "hc32_ll_aes_ex.h"`
+
+**ECB 加密(简单块,无 IV,不推荐用于安全场景):**
+
+```c
+#include "hc32_ll_aes_ex.h"
+
+stc_aes_ctx_t ctx;
+uint8_t key[16] = { /* AES-128, 也可用 24/32 */ };
+uint8_t cipher[256];
+uint32_t out_len;
+
+AES_Init_Ex(&ctx,
+            AES_EX_MODE_ECB,
+            AES_EX_DIR_ENCRYPT,
+            key, AES_KEY_SIZE_16BYTE,
+            NULL);                       /* ECB 不传 IV */
+
+AES_Update_Ex(&ctx, plaintext, len, cipher, &out_len); /* 未满 16B 会暂存 */
+AES_Final_Ex(&ctx, cipher + out_len, &out_len);         /* 自动 PKCS#7 补齐 1 块 */
+```
+
+**CBC 加密(带 IV):**
+
+```c
+stc_aes_ctx_t ctx;
+uint8_t key[16] = { /* ... */ };
+uint8_t iv[16]  = { /* 随机值,加解密必须同一 */ };
+
+AES_Init_Ex(&ctx, AES_EX_MODE_CBC, AES_EX_DIR_ENCRYPT,
+            key, AES_KEY_SIZE_16BYTE, iv);
+
+AES_Update_Ex(&ctx, chunk1, len1, cipher,          &out1);
+AES_Update_Ex(&ctx, chunk2, len2, cipher + out1,   &out2);
+AES_Final_Ex(&ctx, cipher + out1 + out2,           &out3);
+```
+
+**CBC 解密(`Final` 同样是 3 参数,最后一个密文块由 `Update` 自动保留):**
+
+```c
+AES_Init_Ex(&ctx, AES_EX_MODE_CBC, AES_EX_DIR_DECRYPT,
+            key, AES_KEY_SIZE_16BYTE, iv);  /* IV 和加密时相同 */
+
+/* 每次 Update 必须输入 16B 整数倍,可多次调用,输出会延迟一块 */
+AES_Update_Ex(&ctx, cipher + off, len, plain + out_off, &out);
+
+/* Final 内部解密被保留的最后一块,校验并剥离 PKCS#7 */
+AES_Final_Ex(&ctx, plain + out_off, &out);
+```
+
+> 解密时 `Update` 的输出比输入滞后一个 16B 块,因为最后一块可能带 padding,只能在 Final 校验.
+
+**CTR(流密码,不需要 padding):**
+
+```c
+stc_aes_ctx_t ctx;
+uint8_t nonce_ctr[16] = { /* 高 8B nonce + 低 8B 初始 counter(大端) */ };
+
+AES_Init_Ex(&ctx, AES_EX_MODE_CTR, AES_EX_DIR_ENCRYPT, /* dir 被忽略 */
+            key, AES_KEY_SIZE_16BYTE, nonce_ctr);
+
+/* CTR 每次 Update 都立刻返回输出字节数,不需要 16B 对齐 */
+AES_Update_Ex(&ctx, plaintext, len, cipher, &out);
+
+AES_Final_Ex(&ctx, cipher + out, &out); /* CTR Final out=0,空操作 */
+```
+
+> **安全须知**:
+> - ECB/CBC 解密时,每次 `Update` 的密文长度必须是 16B 整倍数,否则返回 `LL_ERR_INVD_PARAM`.
+> - PKCS#7 在解密 Final 中做严格校验,padding 字节必须全部等于其值.
+> - CTR 模式下同一 `(key, nonce)` 绝不能重复使用同一 counter 值,否则 keystream 会重复导致明文泄露.
+> - 成功 Final 后 ctx 中的 key、buffer、ctr 均会自动清零,不会在 RAM 中残留密钥.
+
+### 返回值
+
+所有扩展 API 统一使用 `hc32_ll_def.h` 中的返回码:
+
+| 返回值 | 含义 |
+|---|---|
+| `LL_OK` (0) | 成功 |
+| `LL_ERR_INVD_PARAM` | 指针 NULL、参数越界、状态机非法或 padding 校验失败 |
+| `LL_ERR_TIMEOUT` | 硬件 START 在超时窗口内未清零 |
+
+### 多任务安全示例
+
+```c
+/* 任务 A:算固件 SHA256 */
+stc_hash_ctx_t ctx_fw;
+HASH_Init_Ex(&ctx_fw);
+HASH_Update_Ex(&ctx_fw, fw_chunk, fw_len);
+HASH_Final_Ex(&ctx_fw, fw_hash);
+
+/* 任务 B:算通信包 HMAC */
+stc_hmac_ctx_t ctx_comm;
+HMAC_Init_Ex(&ctx_comm, key, key_len);
+HMAC_Update_Ex(&ctx_comm, rx_pkt, rx_len);
+HMAC_Final_Ex(&ctx_comm, mac);
+```
+
+两套 ctx 各自独立,但 **HASH/AES 硬件是共享的**.若两个任务并发调用,需在调用方外层加互斥保护:
+
+```c
+/* 以 RT-Thread 为例 */
+#include <rtthread.h>
+
+rt_mutex_t crypto_mutex = rt_mutex_create("crypto", RT_IPC_FLAG_PRIO);
+
+rt_mutex_take(crypto_mutex, RT_WAITING_FOREVER);
+HASH_Update_Ex(&ctx, data, len);
+rt_mutex_release(crypto_mutex);
+```
 
 ## 使用前准备
 
